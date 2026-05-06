@@ -34,6 +34,7 @@
 soundcloud-functional-tests
 ├── pom.xml
 ├── README.md
+├── report.md
 └── src
     └── test
         ├── java
@@ -67,7 +68,7 @@ mvn test -Dbrowser=chrome
 mvn test -Dbrowser=firefox
 ```
 
-Chrome и Firefox:
+Chrome и Firefox параллельно:
 
 ```bash
 mvn test -Dbrowser=all
@@ -86,6 +87,10 @@ mvn test -Dbrowser=chrome -Dheadless=true
 - Используются явные ожидания `WebDriverWait`.
 - Реальные аккаунты и загрузка файлов не используются.
 - Для запуска нужны установленные браузеры и доступный в `PATH` Maven.
+
+## Отчет
+
+Полный шаблон отчета для лабораторной работы вынесен в [report.md](report.md).
 
 ## Use Case Diagram
 

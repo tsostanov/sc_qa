@@ -41,8 +41,7 @@ public abstract class BaseTest {
             throw new IllegalStateException("Search results were not found for query: " + query);
         }
 
-        searchPage.openFirstTrack();
-        return new TrackPage(driver);
+        return searchPage.openFirstTrack();
     }
 
     protected TrackPage openDefaultTrack(BrowserType browserType) {

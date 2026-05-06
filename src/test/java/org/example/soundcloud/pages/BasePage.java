@@ -3,6 +3,7 @@ package org.example.soundcloud.pages;
 import java.time.Duration;
 import java.util.List;
 import org.openqa.selenium.By;
+import org.openqa.selenium.ElementClickInterceptedException;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
@@ -58,7 +59,7 @@ public abstract class BasePage {
             WebElement refreshedElement = waitForClickable(locator);
             scrollIntoView(refreshedElement);
             jsClick(refreshedElement);
-        } catch (RuntimeException exception) {
+        } catch (ElementClickInterceptedException exception) {
             jsClick(element);
         }
     }

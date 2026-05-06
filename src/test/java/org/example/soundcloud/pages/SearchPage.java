@@ -26,7 +26,11 @@ public class SearchPage extends BasePage {
     }
 
     public boolean hasResults() {
-        return !isVisible(noResultsBlock) && countVisibleElements(searchResultItems) > 0;
+        if (countVisibleElements(searchResultItems) > 0) {
+            return true;
+        }
+
+        return !isVisible(noResultsBlock);
     }
 
     public TrackPage openFirstTrack() {

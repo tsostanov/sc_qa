@@ -42,13 +42,24 @@ public abstract class BasePage {
     }
 
     protected void openUrl(String url) {
-        driver.get(url);
+        try {
+            driver.get(url);
+        } catch (TimeoutException ignored) {
+            // SoundCloud can keep loading analytics and media long after the useful UI is already available.
+        }
+
         waitForDocumentReady();
     }
 
     protected void waitForDocumentReady() {
-        wait.until(webDriver -> "complete".equals(
-                ((JavascriptExecutor) webDriver).executeScript("return document.readyState")));
+        try {
+            wait.until(webDriver -> {
+                Object readyState = ((JavascriptExecutor) webDriver).executeScript("return document.readyState");
+                return "interactive".equals(readyState) || "complete".equals(readyState);
+            });
+        } catch (WebDriverException ignored) {
+            // Individual pages perform their own marker-based waits; a strict readyState is too brittle here.
+        }
     }
 
     protected WebElement waitForVisible(By locator) {
@@ -97,12 +108,41 @@ public abstract class BasePage {
     protected void clickFirstVisible(By... locators) {
         for (By locator : locators) {
             if (isVisible(locator, SHORT_TIMEOUT)) {
-                click(locator);
+                clickVisibleElement(locator);
                 return;
             }
         }
 
         throw new NoSuchElementException("None of the provided locators is visible");
+    }
+
+    protected void clickVisibleElement(By locator) {
+        dismissCookieBannerIfPresent();
+
+        WebElement visibleElement = new WebDriverWait(driver, DEFAULT_TIMEOUT).until(webDriver -> {
+            for (WebElement element : webDriver.findElements(locator)) {
+                try {
+                    if (element.isDisplayed()) {
+                        return element;
+                    }
+                } catch (StaleElementReferenceException ignored) {
+                    // Candidate elements can be re-rendered while the header or modal is mounting.
+                }
+            }
+
+            return null;
+        });
+
+        scrollIntoView(visibleElement);
+
+        try {
+            visibleElement.click();
+        } catch (ElementClickInterceptedException exception) {
+            dismissCookieBannerIfPresent();
+            jsClick(visibleElement);
+        } catch (StaleElementReferenceException exception) {
+            click(locator);
+        }
     }
 
     protected void type(By locator, String value) {

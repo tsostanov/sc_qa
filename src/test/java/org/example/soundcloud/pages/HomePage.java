@@ -64,7 +64,7 @@ public class HomePage extends BasePage {
 
     public UploadPage goToUpload() {
         if (isVisible(uploadButton, SHORT_TIMEOUT)) {
-            click(uploadButton);
+            clickVisibleElement(uploadButton);
         } else {
             openUrl(TestData.BASE_URL + "upload");
             dismissCookieBannerIfPresent();
@@ -77,7 +77,7 @@ public class HomePage extends BasePage {
         LoginPage loginPage = new LoginPage(driver);
 
         if (isVisible(signInButton, SHORT_TIMEOUT)) {
-            click(signInButton);
+            clickVisibleElement(signInButton);
         } else {
             openUrl(TestData.BASE_URL + "signin");
             dismissCookieBannerIfPresent();

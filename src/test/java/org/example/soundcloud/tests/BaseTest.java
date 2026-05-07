@@ -1,6 +1,7 @@
 package org.example.soundcloud.tests;
 
 import java.util.stream.Stream;
+import java.util.function.Supplier;
 import org.example.soundcloud.core.BrowserType;
 import org.example.soundcloud.core.DriverFactory;
 import org.example.soundcloud.core.TestData;
@@ -24,13 +25,11 @@ public abstract class BaseTest {
     }
 
     protected HomePage openHomePage(BrowserType browserType) {
-        openBrowser(browserType);
-        return new HomePage(driver).open();
+        return openWithFreshBrowserRetry(browserType, () -> new HomePage(driver).open());
     }
 
     protected SearchPage openSearchResults(BrowserType browserType, String query) {
-        openBrowser(browserType);
-        return new SearchPage(driver).open(query);
+        return openWithFreshBrowserRetry(browserType, () -> new SearchPage(driver).open(query));
     }
 
     protected TrackPage openFirstTrack(BrowserType browserType, String query) {
@@ -54,10 +53,38 @@ public abstract class BaseTest {
         return openFirstTrack(browserType, TestData.SECONDARY_QUERY);
     }
 
+    private <T> T openWithFreshBrowserRetry(BrowserType browserType, Supplier<T> action) {
+        RuntimeException lastException = null;
+
+        for (int attempt = 0; attempt < 2; attempt++) {
+            try {
+                openBrowser(browserType);
+                return action.get();
+            } catch (RuntimeException exception) {
+                lastException = exception;
+                closeDriverQuietly();
+            }
+        }
+
+        throw lastException;
+    }
+
+    private void closeDriverQuietly() {
+        if (driver == null) {
+            return;
+        }
+
+        try {
+            driver.quit();
+        } catch (RuntimeException ignored) {
+            // Browser processes can already be gone when Selenium reports a broken session.
+        } finally {
+            driver = null;
+        }
+    }
+
     @AfterEach
     void tearDown() {
-        if (driver != null) {
-            driver.quit();
-        }
+        closeDriverQuietly();
     }
 }

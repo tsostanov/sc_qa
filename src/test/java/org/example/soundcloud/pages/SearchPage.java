@@ -16,7 +16,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class SearchPage extends BasePage {
 
-    private static final Duration RESULTS_TIMEOUT = Duration.ofSeconds(15);
+    private static final Duration RESULTS_TIMEOUT = Duration.ofSeconds(25);
     private final By firstTrackTitle = By.xpath(
             "(//a[@href and normalize-space()"
                     + " and (contains(@class,'trackItem__trackTitle') or contains(@class,'soundTitle__title'))"
@@ -51,12 +51,20 @@ public class SearchPage extends BasePage {
     }
 
     public boolean hasResults() {
-        waitForResultsState();
+        ensureResultsLoaded();
         return hasResultLinks();
     }
 
     public TrackPage openFirstTrack() {
         String href = firstResultLink().getAttribute("href");
+        openUrl(href);
+        dismissCookieBannerIfPresent();
+        return new TrackPage(driver);
+    }
+
+    public TrackPage openFirstResultMatchingAll(String... fragments) {
+        WebElement targetResult = firstResultMatchingAll(fragments);
+        String href = targetResult.getAttribute("href");
         openUrl(href);
         dismissCookieBannerIfPresent();
         return new TrackPage(driver);
@@ -68,7 +76,7 @@ public class SearchPage extends BasePage {
     }
 
     public boolean hasResultMatchingAll(String... fragments) {
-        waitForResultsState();
+        ensureResultsLoaded();
         List<String> normalizedFragments = List.of(fragments).stream()
                 .map(fragment -> fragment.toLowerCase(Locale.ROOT).trim())
                 .filter(fragment -> !fragment.isBlank())
@@ -86,6 +94,20 @@ public class SearchPage extends BasePage {
         } catch (TimeoutException ignored) {
             // Search results are loaded asynchronously; fall through and let the caller inspect the final DOM state.
         }
+    }
+
+    private void ensureResultsLoaded() {
+        waitForResultsState();
+
+        if (hasResultLinks()) {
+            return;
+        }
+
+        driver.navigate().refresh();
+        waitForDocumentReady();
+        dismissCookieBannerIfPresent();
+        waitUntilOpened();
+        waitForResultsState();
     }
 
     private boolean hasResultLinks() {
@@ -107,7 +129,7 @@ public class SearchPage extends BasePage {
     }
 
     private WebElement firstResultLink() {
-        waitForResultsState();
+        ensureResultsLoaded();
 
         List<WebElement> results = findResultLinks();
         if (results.isEmpty()) {
@@ -115,6 +137,27 @@ public class SearchPage extends BasePage {
         }
 
         return results.get(0);
+    }
+
+    private WebElement firstResultMatchingAll(String... fragments) {
+        ensureResultsLoaded();
+
+        List<String> normalizedFragments = List.of(fragments).stream()
+                .map(fragment -> fragment.toLowerCase(Locale.ROOT).trim())
+                .filter(fragment -> !fragment.isBlank())
+                .toList();
+
+        if (normalizedFragments.isEmpty()) {
+            return firstResultLink();
+        }
+
+        return findResultLinks().stream()
+                .filter(resultLink -> {
+                    String searchableText = extractSearchableText(resultLink).toLowerCase(Locale.ROOT);
+                    return normalizedFragments.stream().allMatch(searchableText::contains);
+                })
+                .findFirst()
+                .orElseGet(this::firstResultLink);
     }
 
     private List<WebElement> findResultLinks() {

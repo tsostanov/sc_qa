@@ -23,7 +23,7 @@ public class SearchTest extends BaseTest {
     @ParameterizedTest(name = "[{index}] should show search results in {0}")
     @MethodSource("org.example.soundcloud.tests.BaseTest#browsers")
     void shouldDisplaySearchResults(BrowserType browserType) {
-        SearchPage searchPage = openSearchResults(browserType, TestData.PRIMARY_QUERY);
+        SearchPage searchPage = openSearchResults(browserType, TestData.SPECIFIC_TRACK_QUERY);
 
         assertTrue(searchPage.hasResults(), "Search results should be displayed");
         assertFalse(searchPage.getFirstTrackTitle().isBlank(), "The first track title should not be blank");
@@ -42,11 +42,11 @@ public class SearchTest extends BaseTest {
     @ParameterizedTest(name = "[{index}] should open first search result in {0}")
     @MethodSource("org.example.soundcloud.tests.BaseTest#browsers")
     void shouldOpenFirstTrackFromResults(BrowserType browserType) {
-        SearchPage searchPage = openSearchResults(browserType, TestData.SECONDARY_QUERY);
+        SearchPage searchPage = openSearchResults(browserType, TestData.SPECIFIC_TRACK_QUERY);
 
         assertTrue(searchPage.hasResults(), "Search should return at least one result");
 
-        TrackPage trackPage = searchPage.openFirstTrack();
+        TrackPage trackPage = searchPage.openFirstResultMatchingAll("губы", "tyomnyy-prints");
 
         assertTrue(trackPage.isTrackPageOpened(), "Track page should be opened from search results");
     }

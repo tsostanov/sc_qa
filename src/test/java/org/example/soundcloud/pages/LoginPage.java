@@ -40,7 +40,7 @@ public class LoginPage extends BasePage {
         }
 
         if (isVisible(signInTrigger, SHORT_TIMEOUT)) {
-            click(signInTrigger);
+            clickVisibleElement(signInTrigger);
         }
 
         return this;

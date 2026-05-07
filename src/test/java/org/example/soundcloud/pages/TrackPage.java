@@ -75,19 +75,30 @@ public class TrackPage extends BasePage {
     public boolean isTrackPageOpened() {
         waitForDocumentReady();
         dismissAuthGateIfPresent();
-        return !currentUrl().contains("/search") && !currentUrl().contains("/upload") && isVisible(trackTitle)
-                && pageTitle().toLowerCase().contains("soundcloud");
+        return !currentUrl().contains("/search")
+                && !currentUrl().contains("/upload")
+                && pageTitle().toLowerCase().contains("soundcloud")
+                && (isVisible(trackTitle) || isVisible(artistLink, SHORT_TIMEOUT) || isPlayerVisible());
     }
 
     public void play() {
         dismissAuthGateIfPresent();
-        click(playButton);
+
+        if (isVisible(pauseButton, SHORT_TIMEOUT)) {
+            return;
+        }
+
+        if (isVisible(playButton, DEFAULT_TIMEOUT)) {
+            click(playButton);
+        }
 
         if (isVisible(authGate, SHORT_TIMEOUT)) {
             dismissAuthGateIfPresent();
 
             if (isVisible(playButton, SHORT_TIMEOUT)) {
                 click(playButton);
+            } else if (isVisible(pauseButton, SHORT_TIMEOUT)) {
+                return;
             }
         }
     }

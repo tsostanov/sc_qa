@@ -97,17 +97,22 @@ public class SearchPage extends BasePage {
     }
 
     private void ensureResultsLoaded() {
-        waitForResultsState();
+        for (int attempt = 0; attempt < 3; attempt++) {
+            waitForResultsState();
 
-        if (hasResultLinks()) {
-            return;
+            if (hasResultLinks()) {
+                return;
+            }
+
+            if (attempt == 2) {
+                return;
+            }
+
+            driver.navigate().refresh();
+            waitForDocumentReady();
+            dismissCookieBannerIfPresent();
+            waitUntilOpened();
         }
-
-        driver.navigate().refresh();
-        waitForDocumentReady();
-        dismissCookieBannerIfPresent();
-        waitUntilOpened();
-        waitForResultsState();
     }
 
     private boolean hasResultLinks() {

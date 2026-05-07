@@ -63,7 +63,13 @@ public final class DriverFactory {
         driver.manage().timeouts().implicitlyWait(Duration.ZERO);
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(120));
         driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(60));
-        driver.manage().window().setSize(new Dimension(1920, 1080));
+
+        if (Boolean.parseBoolean(System.getProperty("headless", "false"))) {
+            driver.manage().window().setSize(new Dimension(1920, 1080));
+        } else {
+            driver.manage().window().maximize();
+        }
+
         return driver;
     }
 }

@@ -2,9 +2,11 @@ package org.example.soundcloud.tests;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import org.example.soundcloud.core.BrowserType;
 import org.example.soundcloud.pages.ArtistPage;
 import org.example.soundcloud.pages.TrackPage;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -54,5 +56,16 @@ public class PlayerTest extends BaseTest {
         trackPage.openShareDialog();
 
         assertTrue(trackPage.isShareDialogOpened(), "Share dialog should be opened");
+    }
+
+    @Disabled("Manual long-running scenario for external SoundCloud playback")
+    @ParameterizedTest(name = "[{index}] should close after track finishes in {0}")
+    @MethodSource("org.example.soundcloud.tests.BaseTest#browsers")
+    void shouldFinishPlaybackAndClose(BrowserType browserType) {
+        TrackPage trackPage = openDefaultTrack(browserType);
+
+        assertTrue(trackPage.isTrackPageOpened(), "Track page should be opened before waiting for playback to finish");
+        assertTrue(trackPage.waitUntilPlaybackFinishes(Duration.ofMinutes(4)),
+                "Track should finish playback within the expected timeout");
     }
 }

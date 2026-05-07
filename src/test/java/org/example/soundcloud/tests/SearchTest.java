@@ -29,6 +29,16 @@ public class SearchTest extends BaseTest {
         assertFalse(searchPage.getFirstTrackTitle().isBlank(), "The first track title should not be blank");
     }
 
+    @ParameterizedTest(name = "[{index}] should find губы темный принц in {0}")
+    @MethodSource("org.example.soundcloud.tests.BaseTest#browsers")
+    void shouldFindSpecificTrack(BrowserType browserType) {
+        SearchPage searchPage = openSearchResults(browserType, TestData.SPECIFIC_TRACK_QUERY);
+
+        assertTrue(searchPage.hasResults(), "Search should return results for the specific track query");
+        assertTrue(searchPage.hasResultMatchingAll("губы", "tyomnyy-prints"),
+                "Search results should contain the requested track");
+    }
+
     @ParameterizedTest(name = "[{index}] should open first search result in {0}")
     @MethodSource("org.example.soundcloud.tests.BaseTest#browsers")
     void shouldOpenFirstTrackFromResults(BrowserType browserType) {

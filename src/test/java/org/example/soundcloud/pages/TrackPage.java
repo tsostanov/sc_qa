@@ -1,7 +1,11 @@
 package org.example.soundcloud.pages;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.ElementClickInterceptedException;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 
 public class TrackPage extends BasePage {
 
@@ -42,9 +46,18 @@ public class TrackPage extends BasePage {
                     + " | //button[normalize-space()='Copy Link']");
     private final By authGate = By.xpath(
             "//div[contains(@class,'auth-modal')]"
+                    + " | //div[@role='dialog'][.//*[contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'sign in or create an account')]]"
                     + " | //button[normalize-space()='Sign in' and contains(@class,'loginButton')]"
                     + " | //button[@aria-label='Sign in' and contains(@class,'loginButton')]"
                     + " | //button[@aria-label='Create a SoundCloud account']");
+    private final By authGateCloseButton = By.xpath(
+            "(//div[contains(@class,'auth-modal')]"
+                    + " | //div[@role='dialog'][.//*[contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'sign in or create an account')]])"
+                    + "//button[@aria-label='Close' or contains(@class,'closeButton') or contains(@class,'modalClose')"
+                    + " or contains(@title,'Close') or normalize-space()='Close']"
+                    + " | //button[@aria-label='Close' and ancestor::div[@role='dialog']]"
+                    + " | //button[contains(@class,'closeButton') and ancestor::div[@role='dialog']]"
+                    + " | //button[contains(@class,'modalClose') and ancestor::div[@role='dialog']]");
 
     public TrackPage(WebDriver driver) {
         super(driver);
@@ -52,15 +65,26 @@ public class TrackPage extends BasePage {
 
     public boolean isTrackPageOpened() {
         waitForDocumentReady();
+        dismissAuthGateIfPresent();
         return !currentUrl().contains("/search") && !currentUrl().contains("/upload") && isVisible(trackTitle)
                 && pageTitle().toLowerCase().contains("soundcloud");
     }
 
     public void play() {
+        dismissAuthGateIfPresent();
         click(playButton);
+
+        if (isVisible(authGate, SHORT_TIMEOUT)) {
+            dismissAuthGateIfPresent();
+
+            if (isVisible(playButton, SHORT_TIMEOUT)) {
+                click(playButton);
+            }
+        }
     }
 
     public void pause() {
+        dismissAuthGateIfPresent();
         click(pauseButton);
     }
 
@@ -77,11 +101,14 @@ public class TrackPage extends BasePage {
     }
 
     public ArtistPage openArtistPage() {
+        dismissAuthGateIfPresent();
         click(artistLink);
         return new ArtistPage(driver);
     }
 
     public void openShareDialog() {
+        dismissAuthGateIfPresent();
+
         if (isAnyVisible(DEFAULT_TIMEOUT, copyLinkButton, shareDialog)) {
             return;
         }
@@ -93,5 +120,33 @@ public class TrackPage extends BasePage {
 
     public boolean isShareDialogOpened() {
         return isVisible(shareDialog) || isVisible(copyLinkButton);
+    }
+
+    public void dismissAuthGateIfPresent() {
+        if (!isVisible(authGate, SHORT_TIMEOUT)) {
+            return;
+        }
+
+        for (WebElement closeButton : driver.findElements(authGateCloseButton)) {
+            try {
+                if (!closeButton.isDisplayed()) {
+                    continue;
+                }
+
+                scrollIntoView(closeButton);
+
+                try {
+                    closeButton.click();
+                } catch (ElementClickInterceptedException exception) {
+                    jsClick(closeButton);
+                }
+
+                return;
+            } catch (StaleElementReferenceException ignored) {
+                // Auth overlays are short-lived and can re-render while closing.
+            }
+        }
+
+        driver.switchTo().activeElement().sendKeys(Keys.ESCAPE);
     }
 }

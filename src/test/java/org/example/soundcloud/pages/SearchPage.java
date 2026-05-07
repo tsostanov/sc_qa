@@ -4,6 +4,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 import org.example.soundcloud.core.TestData;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
@@ -63,18 +64,20 @@ public class SearchPage extends BasePage {
 
     public String getFirstTrackTitle() {
         WebElement firstResult = firstResultLink();
-        String text = firstResult.getText().trim();
-        if (!text.isBlank()) {
-            return text;
-        }
+        return extractResultText(firstResult);
+    }
 
-        String title = firstResult.getAttribute("title");
-        if (title != null && !title.isBlank()) {
-            return title.trim();
-        }
+    public boolean hasResultMatchingAll(String... fragments) {
+        waitForResultsState();
+        List<String> normalizedFragments = List.of(fragments).stream()
+                .map(fragment -> fragment.toLowerCase(Locale.ROOT).trim())
+                .filter(fragment -> !fragment.isBlank())
+                .toList();
 
-        String ariaLabel = firstResult.getAttribute("aria-label");
-        return ariaLabel == null ? "" : ariaLabel.trim();
+        return findResultLinks().stream()
+                .map(this::extractSearchableText)
+                .map(text -> text.toLowerCase(Locale.ROOT))
+                .anyMatch(text -> normalizedFragments.stream().allMatch(text::contains));
     }
 
     private void waitForResultsState() {
@@ -125,5 +128,25 @@ public class SearchPage extends BasePage {
                     }
                 })
                 .toList();
+    }
+
+    private String extractResultText(WebElement resultLink) {
+        String text = resultLink.getText().trim();
+        if (!text.isBlank()) {
+            return text;
+        }
+
+        String title = resultLink.getAttribute("title");
+        if (title != null && !title.isBlank()) {
+            return title.trim();
+        }
+
+        String ariaLabel = resultLink.getAttribute("aria-label");
+        return ariaLabel == null ? "" : ariaLabel.trim();
+    }
+
+    private String extractSearchableText(WebElement resultLink) {
+        String href = resultLink.getAttribute("href");
+        return (extractResultText(resultLink) + " " + (href == null ? "" : href)).trim();
     }
 }

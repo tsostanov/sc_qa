@@ -1,19 +1,33 @@
 package org.example.soundcloud.pages;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import org.example.soundcloud.core.TestData;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 
 public class SearchPage extends BasePage {
 
     private final By firstTrackTitle = By.xpath(
-            "(//li[contains(@class,'searchList__item')]//a[contains(@class,'soundTitle__title')])[1]");
+            "(//li[contains(@class,'searchList__item')]//a[normalize-space()"
+                    + " and not(contains(@class,'soundTitle__username'))"
+                    + " and not(contains(@class,'userBadge'))])[1]");
     private final By searchResultItems = By.xpath(
-            "//li[contains(@class,'searchList__item')]//a[contains(@class,'soundTitle__title')]");
+            "//li[contains(@class,'searchList__item')]//a[normalize-space()"
+                    + " and not(contains(@class,'soundTitle__username'))"
+                    + " and not(contains(@class,'userBadge'))]");
     private final By noResultsBlock = By.xpath(
             "//*[contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'no results')]");
 
     public SearchPage(WebDriver driver) {
         super(driver);
+    }
+
+    public SearchPage open(String query) {
+        openUrl(TestData.BASE_URL + "search?q=" + URLEncoder.encode(query, StandardCharsets.UTF_8));
+        dismissCookieBannerIfPresent();
+        waitUntilOpened();
+        return this;
     }
 
     public boolean isSearchPageOpened() {
@@ -30,7 +44,7 @@ public class SearchPage extends BasePage {
             return true;
         }
 
-        return !isVisible(noResultsBlock);
+        return false;
     }
 
     public TrackPage openFirstTrack() {

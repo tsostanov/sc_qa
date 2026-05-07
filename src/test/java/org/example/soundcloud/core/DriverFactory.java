@@ -1,6 +1,7 @@
 package org.example.soundcloud.core;
 
 import java.time.Duration;
+import java.util.List;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -25,8 +26,11 @@ public final class DriverFactory {
         options.addArguments("--disable-notifications");
         options.addArguments("--disable-search-engine-choice-screen");
         options.addArguments("--disable-popup-blocking");
+        options.addArguments("--disable-blink-features=AutomationControlled");
         options.addArguments("--lang=en-US");
         options.addArguments("--autoplay-policy=no-user-gesture-required");
+        options.setExperimentalOption("excludeSwitches", List.of("enable-automation"));
+        options.setExperimentalOption("useAutomationExtension", false);
 
         if (Boolean.parseBoolean(System.getProperty("headless", "false"))) {
             options.addArguments("--headless=new");

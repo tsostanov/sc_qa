@@ -5,6 +5,9 @@ import org.openqa.selenium.WebDriver;
 
 public class LoginPage extends BasePage {
 
+    private final By signInTrigger = By.xpath(
+            "//button[normalize-space()='Sign in' or @aria-label='Sign in']"
+                    + " | //a[normalize-space()='Sign in' or contains(@href,'signin') or contains(@href,'login')]");
     private final By loginForm = By.xpath(
             "//div[@role='dialog'][.//*[normalize-space()='Sign in' or contains(.,'email')]]"
                     + " | //form[.//input[@type='email' or @name='email']]");
@@ -25,11 +28,27 @@ public class LoginPage extends BasePage {
         super(driver);
     }
 
+    public LoginPage ensureLoginFormOpened() {
+        dismissCookieBannerIfPresent();
+
+        if (isVisible(loginForm, SHORT_TIMEOUT) || isVisible(emailInput, SHORT_TIMEOUT)) {
+            return this;
+        }
+
+        if (isVisible(signInTrigger, SHORT_TIMEOUT)) {
+            click(signInTrigger);
+        }
+
+        return this;
+    }
+
     public boolean isLoginFormOpened() {
+        ensureLoginFormOpened();
         return isVisible(loginForm) || isVisible(emailInput);
     }
 
     public LoginPage tryLogin(String email, String password) {
+        ensureLoginFormOpened();
         type(emailInput, email);
 
         if (!isVisible(passwordInput, SHORT_TIMEOUT)) {

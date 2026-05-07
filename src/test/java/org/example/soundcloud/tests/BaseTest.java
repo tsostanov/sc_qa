@@ -29,10 +29,8 @@ public abstract class BaseTest {
     }
 
     protected SearchPage openSearchResults(BrowserType browserType, String query) {
-        HomePage homePage = openHomePage(browserType);
-        SearchPage searchPage = homePage.search(query);
-        searchPage.waitUntilOpened();
-        return searchPage;
+        openBrowser(browserType);
+        return new SearchPage(driver).open(query);
     }
 
     protected TrackPage openFirstTrack(BrowserType browserType, String query) {

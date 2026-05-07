@@ -15,13 +15,17 @@ public class TrackPage extends BasePage {
     private final By playButton = By.xpath(
             "(//a[contains(@class,'playButton') or contains(@class,'sc-button-play')"
                     + " or contains(@title,'Play') or contains(@aria-label,'Play')]"
+                    + "[not(@disabled) and not(contains(@class,'disabled'))]"
                     + " | //button[contains(@class,'playButton') or contains(@class,'playControls__control')]"
-                    + "[contains(@title,'Play') or contains(@aria-label,'Play')])[1]");
+                    + "[contains(@title,'Play') or contains(@aria-label,'Play')]"
+                    + "[not(@disabled) and not(contains(@class,'disabled'))])[1]");
     private final By pauseButton = By.xpath(
             "(//a[contains(@class,'playButton') or contains(@class,'sc-button-play')"
                     + " or contains(@title,'Pause') or contains(@aria-label,'Pause')]"
+                    + "[not(@disabled) and not(contains(@class,'disabled'))]"
                     + " | //button[contains(@class,'playButton') or contains(@class,'playControls__control')]"
-                    + "[contains(@title,'Pause') or contains(@aria-label,'Pause')])[1]");
+                    + "[contains(@title,'Pause') or contains(@aria-label,'Pause')]"
+                    + "[not(@disabled) and not(contains(@class,'disabled'))])[1]");
     private final By playerVisibleMarker = By.xpath(
             "//div[contains(@class,'playControls')] | //div[contains(@class,'playbackTimeline')]"
                     + " | //button[contains(@class,'playControls__control')]"

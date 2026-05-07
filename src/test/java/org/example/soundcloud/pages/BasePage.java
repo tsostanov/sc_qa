@@ -22,10 +22,6 @@ public abstract class BasePage {
     protected static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(20);
     protected static final Duration SHORT_TIMEOUT = Duration.ofSeconds(5);
     private static final Duration COOKIE_TIMEOUT = Duration.ofSeconds(2);
-    private static final By COOKIE_DIALOG = By.xpath(
-            "//*[contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'cookies & tracking')"
-                    + " or contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'manage preferences')"
-                    + " or contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'personalized ads')]");
     private static final By[] COOKIE_ACTIONS = new By[] {
             By.xpath("//button[normalize-space()='Reject All']"),
             By.xpath("//button[normalize-space()='Reject all']"),
@@ -194,9 +190,8 @@ public abstract class BasePage {
 
     private boolean dismissCookieBannerInCurrentContext() {
         try {
-            new WebDriverWait(driver, COOKIE_TIMEOUT).until(webDriver ->
-                    hasVisibleElement(COOKIE_DIALOG) || hasVisibleElement(COOKIE_ACTIONS));
-        } catch (TimeoutException exception) {
+            new WebDriverWait(driver, COOKIE_TIMEOUT).until(webDriver -> hasVisibleCookieAction());
+        } catch (WebDriverException exception) {
             return false;
         }
 
@@ -212,6 +207,8 @@ public abstract class BasePage {
                     element.click();
                 } catch (ElementClickInterceptedException exception) {
                     jsClick(element);
+                } catch (WebDriverException exception) {
+                    continue;
                 }
 
                 waitForCookieBannerToDisappear();
@@ -244,10 +241,30 @@ public abstract class BasePage {
 
     private boolean hasVisibleElement(By... locators) {
         for (By locator : locators) {
-            for (WebElement element : driver.findElements(locator)) {
-                if (element.isDisplayed()) {
-                    return true;
+            try {
+                for (WebElement element : driver.findElements(locator)) {
+                    if (element.isDisplayed()) {
+                        return true;
+                    }
                 }
+            } catch (WebDriverException exception) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean hasVisibleCookieAction() {
+        for (By locator : COOKIE_ACTIONS) {
+            try {
+                for (WebElement element : driver.findElements(locator)) {
+                    if (element.isDisplayed()) {
+                        return true;
+                    }
+                }
+            } catch (WebDriverException exception) {
+                return false;
             }
         }
 
@@ -257,7 +274,7 @@ public abstract class BasePage {
     private void waitForCookieBannerToDisappear() {
         try {
             new WebDriverWait(driver, COOKIE_TIMEOUT).until(webDriver ->
-                    !hasVisibleElement(COOKIE_DIALOG) && !hasVisibleElement(COOKIE_ACTIONS));
+                    !hasVisibleCookieAction());
         } catch (TimeoutException ignored) {
             // Some CMPs keep hidden controls mounted in the DOM after closing the banner.
         }

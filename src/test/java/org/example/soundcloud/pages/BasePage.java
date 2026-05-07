@@ -7,8 +7,11 @@ import org.openqa.selenium.ElementClickInterceptedException;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.NoSuchSessionException;
+import org.openqa.selenium.NoSuchWindowException;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -130,7 +133,7 @@ public abstract class BasePage {
         try {
             new WebDriverWait(driver, timeout).until(ExpectedConditions.visibilityOfElementLocated(locator));
             return true;
-        } catch (TimeoutException exception) {
+        } catch (TimeoutException | NoSuchWindowException | NoSuchSessionException exception) {
             return false;
         }
     }
@@ -145,11 +148,19 @@ public abstract class BasePage {
     }
 
     protected int countVisibleElements(By locator) {
-        try {
-            return waitForAllVisible(locator).size();
-        } catch (TimeoutException exception) {
-            return 0;
+        int visibleCount = 0;
+
+        for (WebElement element : driver.findElements(locator)) {
+            try {
+                if (element.isDisplayed()) {
+                    visibleCount++;
+                }
+            } catch (StaleElementReferenceException ignored) {
+                // Search and track result lists are re-rendered aggressively; stale nodes are expected here.
+            }
         }
+
+        return visibleCount;
     }
 
     protected void waitForUrlContains(String fragment) {
@@ -164,13 +175,21 @@ public abstract class BasePage {
         return driver.getTitle();
     }
 
-    protected void dismissCookieBannerIfPresent() {
-        driver.switchTo().defaultContent();
-        if (dismissCookieBannerInCurrentContext()) {
-            return;
-        }
+    protected String attribute(By locator, String attributeName) {
+        return waitForVisible(locator).getAttribute(attributeName);
+    }
 
-        dismissCookieBannerInChildFrames();
+    protected void dismissCookieBannerIfPresent() {
+        try {
+            driver.switchTo().defaultContent();
+            if (dismissCookieBannerInCurrentContext()) {
+                return;
+            }
+
+            dismissCookieBannerInChildFrames();
+        } catch (NoSuchWindowException | NoSuchSessionException ignored) {
+            // The page can replace the browsing context while auth or navigation flows are mounting.
+        }
     }
 
     private boolean dismissCookieBannerInCurrentContext() {
@@ -213,7 +232,7 @@ public abstract class BasePage {
                 if (dismissCookieBannerInCurrentContext() || dismissCookieBannerInChildFrames()) {
                     return true;
                 }
-            } catch (NoSuchElementException | StaleElementReferenceException ignored) {
+            } catch (WebDriverException ignored) {
                 // Consent iframes are dynamic and can be re-rendered while the page loads.
             } finally {
                 driver.switchTo().parentFrame();

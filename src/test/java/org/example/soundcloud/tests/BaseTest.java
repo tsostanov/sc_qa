@@ -43,7 +43,15 @@ public abstract class BaseTest {
     }
 
     protected TrackPage openDefaultTrack(BrowserType browserType) {
-        return openFirstTrack(browserType, TestData.PRIMARY_QUERY);
+        SearchPage searchPage = openSearchResults(browserType, TestData.PRIMARY_QUERY);
+        if (searchPage.hasResults()) {
+            return searchPage.openFirstTrack();
+        }
+
+        driver.quit();
+        driver = null;
+
+        return openFirstTrack(browserType, TestData.SECONDARY_QUERY);
     }
 
     @AfterEach

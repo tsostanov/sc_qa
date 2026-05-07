@@ -20,7 +20,7 @@ public class SearchTest extends BaseTest {
         assertTrue(searchPage.isSearchPageOpened(), "Search results page should be opened");
     }
 
-    @ParameterizedTest(name = "[{index}] should show results for lofi in {0}")
+    @ParameterizedTest(name = "[{index}] should show search results in {0}")
     @MethodSource("org.example.soundcloud.tests.BaseTest#browsers")
     void shouldDisplaySearchResults(BrowserType browserType) {
         SearchPage searchPage = openSearchResults(browserType, TestData.PRIMARY_QUERY);

@@ -12,7 +12,11 @@ public class UploadPage extends BasePage {
                     + " | //form[.//input[@type='email']]"
                     + " | //input[@type='email']"
                     + " | //*[contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'sign in to upload')]"
-                    + " | //*[contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'continue with email')]");
+                    + " | //*[contains(translate(normalize-space(.), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'continue with email')]"
+                    + " | //button[@aria-label='Create a SoundCloud account']"
+                    + " | //button[@aria-label='Sign in']"
+                    + " | //button[normalize-space()='Upload your first track']"
+                    + " | //button[normalize-space()='Join Now']");
 
     public UploadPage(WebDriver driver) {
         super(driver);

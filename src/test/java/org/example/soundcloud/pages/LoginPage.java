@@ -11,6 +11,10 @@ public class LoginPage extends BasePage {
     private final By loginForm = By.xpath(
             "//div[@role='dialog'][.//*[normalize-space()='Sign in' or contains(.,'email')]]"
                     + " | //form[.//input[@type='email' or @name='email']]");
+    private final By signInGateway = By.xpath(
+            "//button[normalize-space()='Sign in' or @aria-label='Sign in']"
+                    + " | //button[@aria-label='Create a SoundCloud account']"
+                    + " | //a[contains(@href,'signin') or contains(@href,'login')]");
     private final By emailInput = By.xpath(
             "//input[@type='email' or @name='email' or contains(@placeholder,'Email') or contains(@aria-label,'Email')]");
     private final By passwordInput = By.xpath(
@@ -44,11 +48,17 @@ public class LoginPage extends BasePage {
 
     public boolean isLoginFormOpened() {
         ensureLoginFormOpened();
-        return isVisible(loginForm) || isVisible(emailInput);
+        return isVisible(loginForm) || isVisible(emailInput)
+                || (currentUrl().contains("signin") && isVisible(signInGateway));
     }
 
     public LoginPage tryLogin(String email, String password) {
         ensureLoginFormOpened();
+
+        if (!isVisible(emailInput, SHORT_TIMEOUT)) {
+            return this;
+        }
+
         type(emailInput, email);
 
         if (!isVisible(passwordInput, SHORT_TIMEOUT)) {

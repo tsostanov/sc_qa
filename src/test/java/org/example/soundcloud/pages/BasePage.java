@@ -260,7 +260,7 @@ public abstract class BasePage {
     }
 
     private boolean dismissCookieBannerInChildFrames() {
-        List<WebElement> frames = driver.findElements(By.tagName("iframe"));
+        List<WebElement> frames = driver.findElements(By.xpath("//iframe"));
 
         for (WebElement frame : frames) {
             try {

@@ -45,7 +45,6 @@ public abstract class BasePage {
         try {
             driver.get(url);
         } catch (TimeoutException ignored) {
-            // SoundCloud can keep loading analytics and media long after the useful UI is already available.
         }
 
         waitForDocumentReady();
@@ -58,7 +57,6 @@ public abstract class BasePage {
                 return "interactive".equals(readyState) || "complete".equals(readyState);
             });
         } catch (WebDriverException ignored) {
-            // Individual pages perform their own marker-based waits; a strict readyState is too brittle here.
         }
     }
 
@@ -120,15 +118,14 @@ public abstract class BasePage {
         dismissCookieBannerIfPresent();
 
         WebElement visibleElement = new WebDriverWait(driver, DEFAULT_TIMEOUT).until(webDriver -> {
-            for (WebElement element : webDriver.findElements(locator)) {
-                try {
-                    if (element.isDisplayed()) {
-                        return element;
+                for (WebElement element : webDriver.findElements(locator)) {
+                    try {
+                        if (element.isDisplayed()) {
+                            return element;
+                        }
+                    } catch (StaleElementReferenceException ignored) {
                     }
-                } catch (StaleElementReferenceException ignored) {
-                    // Candidate elements can be re-rendered while the header or modal is mounting.
                 }
-            }
 
             return null;
         });
@@ -192,7 +189,6 @@ public abstract class BasePage {
                     visibleCount++;
                 }
             } catch (StaleElementReferenceException ignored) {
-                // Search and track result lists are re-rendered aggressively; stale nodes are expected here.
             }
         }
 
@@ -224,7 +220,6 @@ public abstract class BasePage {
 
             dismissCookieBannerInChildFrames();
         } catch (NoSuchWindowException | NoSuchSessionException ignored) {
-            // The page can replace the browsing context while auth or navigation flows are mounting.
         }
     }
 
@@ -270,7 +265,6 @@ public abstract class BasePage {
                     return true;
                 }
             } catch (WebDriverException ignored) {
-                // Consent iframes are dynamic and can be re-rendered while the page loads.
             } finally {
                 driver.switchTo().parentFrame();
             }
@@ -316,7 +310,6 @@ public abstract class BasePage {
             new WebDriverWait(driver, COOKIE_TIMEOUT).until(webDriver ->
                     !hasVisibleCookieAction());
         } catch (TimeoutException ignored) {
-            // Some CMPs keep hidden controls mounted in the DOM after closing the banner.
         }
     }
 

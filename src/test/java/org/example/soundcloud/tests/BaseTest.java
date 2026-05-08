@@ -77,7 +77,6 @@ public abstract class BaseTest {
         try {
             driver.quit();
         } catch (RuntimeException ignored) {
-            // Browser processes can already be gone when Selenium reports a broken session.
         } finally {
             driver = null;
         }

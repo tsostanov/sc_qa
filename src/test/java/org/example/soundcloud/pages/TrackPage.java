@@ -202,7 +202,6 @@ public class TrackPage extends BasePage {
 
                 return;
             } catch (StaleElementReferenceException ignored) {
-                // Auth overlays are short-lived and can re-render while closing.
             }
         }
 
@@ -216,7 +215,6 @@ public class TrackPage extends BasePage {
                     return element.getText().trim();
                 }
             } catch (StaleElementReferenceException ignored) {
-                // Player widgets are frequently re-rendered while playback state changes.
             }
         }
 

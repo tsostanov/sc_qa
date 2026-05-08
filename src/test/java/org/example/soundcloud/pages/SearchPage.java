@@ -92,7 +92,6 @@ public class SearchPage extends BasePage {
         try {
             new WebDriverWait(driver, RESULTS_TIMEOUT).until(webDriver -> hasResultLinks() || hasVisibleNoResultsBlock());
         } catch (TimeoutException ignored) {
-            // Search results are loaded asynchronously; fall through and let the caller inspect the final DOM state.
         }
     }
 
@@ -126,7 +125,6 @@ public class SearchPage extends BasePage {
                     return true;
                 }
             } catch (StaleElementReferenceException ignored) {
-                // Search overlays are re-rendered while the results page mounts.
             }
         }
 

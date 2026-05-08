@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.example.soundcloud.core.BrowserType;
 import org.example.soundcloud.core.TestData;
+import org.example.soundcloud.pages.HomePage;
 import org.example.soundcloud.pages.SearchPage;
 import org.example.soundcloud.pages.TrackPage;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,7 +16,8 @@ public class SearchTest extends BaseTest {
     @ParameterizedTest(name = "[{index}] should open search page in {0}")
     @MethodSource("org.example.soundcloud.tests.BaseTest#browsers")
     void shouldOpenSearchResultsPage(BrowserType browserType) {
-        SearchPage searchPage = openSearchResults(browserType, TestData.PRIMARY_QUERY);
+        HomePage homePage = openHomePage(browserType);
+        SearchPage searchPage = homePage.searchViaUi(TestData.PRIMARY_QUERY);
 
         assertTrue(searchPage.isSearchPageOpened(), "Search results page should be opened");
     }

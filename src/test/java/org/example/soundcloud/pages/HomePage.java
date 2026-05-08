@@ -11,6 +11,7 @@ import org.openqa.selenium.WebElement;
 
 public class HomePage extends BasePage {
 
+    private static final java.time.Duration SEARCH_UI_TIMEOUT = java.time.Duration.ofSeconds(7);
     private final By searchForm = By.cssSelector("form.headerSearch");
     private final By searchInput = By.cssSelector(
             "form.headerSearch input.headerSearch__input[name='q'], "
@@ -48,8 +49,7 @@ public class HomePage extends BasePage {
 
         if (!isPageOpened()) {
             try {
-                waitForAnyVisible(DEFAULT_TIMEOUT, logoLink, popularSearchesLink, searchForm, searchInput,
-                        searchEntryPoint,
+                waitForAnyVisible(DEFAULT_TIMEOUT, logoLink, popularSearchesLink,
                         uploadButton, signInButton);
             } catch (TimeoutException exception) {
                 throw new TimeoutException("Home page did not expose any stable navigation markers", exception);
@@ -73,7 +73,7 @@ public class HomePage extends BasePage {
 
         WebElement searchUiElement = null;
         try {
-            searchUiElement = waitForAnyVisible(DEFAULT_TIMEOUT, searchInput, searchForm, searchEntryPoint);
+            searchUiElement = waitForAnyVisible(SEARCH_UI_TIMEOUT, searchInput, searchForm, searchEntryPoint);
         } catch (TimeoutException ignored) {
         }
 
@@ -111,7 +111,7 @@ public class HomePage extends BasePage {
 
             dismissCookieBannerIfPresent();
 
-            if (isVisible(searchInput, DEFAULT_TIMEOUT)) {
+            if (isVisible(searchInput, SEARCH_UI_TIMEOUT)) {
                 submitSearchFromInput(waitForVisible(searchInput), query, searchPage);
                 return true;
             }
@@ -169,6 +169,6 @@ public class HomePage extends BasePage {
 
     public boolean isSearchInputVisible() {
         dismissCookieBannerIfPresent();
-        return isAnyVisible(DEFAULT_TIMEOUT, searchForm, searchInput, searchEntryPoint);
+        return isAnyVisible(SEARCH_UI_TIMEOUT, searchForm, searchInput, searchEntryPoint);
     }
 }

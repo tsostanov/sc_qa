@@ -321,4 +321,13 @@ public abstract class BasePage {
     protected void jsClick(WebElement element) {
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
     }
+
+    protected void pause(Duration duration) {
+        try {
+            Thread.sleep(duration.toMillis());
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Thread was interrupted while waiting", exception);
+        }
+    }
 }

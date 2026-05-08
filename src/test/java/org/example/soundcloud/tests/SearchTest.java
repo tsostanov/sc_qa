@@ -13,13 +13,16 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public class SearchTest extends BaseTest {
 
-    @ParameterizedTest(name = "[{index}] should open search page in {0}")
+    @ParameterizedTest(name = "[{index}] should find отвратительный король after searching темный принц in {0}")
     @MethodSource("org.example.soundcloud.tests.BaseTest#browsers")
     void shouldOpenSearchResultsPage(BrowserType browserType) {
         HomePage homePage = openHomePage(browserType);
         SearchPage searchPage = homePage.searchViaUi(TestData.PRIMARY_QUERY);
 
         assertTrue(searchPage.isSearchPageOpened(), "Search results page should be opened");
+        assertTrue(searchPage.hasResults(), "Search should return results for темный принц");
+        assertTrue(searchPage.revealResultMatchingAll("отвратительный", "король"),
+                "Search results should contain the track отвратительный король");
     }
 
     @ParameterizedTest(name = "[{index}] should show search results in {0}")

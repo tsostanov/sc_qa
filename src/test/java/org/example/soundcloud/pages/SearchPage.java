@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import org.example.soundcloud.core.TestData;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TimeoutException;
@@ -17,6 +18,11 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 public class SearchPage extends BasePage {
 
     private static final Duration RESULTS_TIMEOUT = Duration.ofSeconds(25);
+    private static final Duration SCROLL_TIMEOUT = Duration.ofSeconds(3);
+    private static final int MAX_SCROLL_ATTEMPTS = 8;
+    private static final Duration SCROLL_STEP_PAUSE = Duration.ofMillis(350);
+    private static final Duration FOUND_RESULT_PAUSE = Duration.ofSeconds(2);
+    private static final int SCROLL_STEPS_PER_ATTEMPT = 4;
     private final By firstTrackTitle = By.xpath(
             "(//a[@href and normalize-space()"
                     + " and (contains(@class,'trackItem__trackTitle') or contains(@class,'soundTitle__title'))"
@@ -76,16 +82,27 @@ public class SearchPage extends BasePage {
     }
 
     public boolean hasResultMatchingAll(String... fragments) {
-        ensureResultsLoaded();
         List<String> normalizedFragments = List.of(fragments).stream()
                 .map(fragment -> fragment.toLowerCase(Locale.ROOT).trim())
                 .filter(fragment -> !fragment.isBlank())
                 .toList();
 
-        return findResultLinks().stream()
-                .map(this::extractSearchableText)
-                .map(text -> text.toLowerCase(Locale.ROOT))
-                .anyMatch(text -> normalizedFragments.stream().allMatch(text::contains));
+        return findResultMatchingAllWithScroll(normalizedFragments) != null;
+    }
+
+    public boolean revealResultMatchingAll(String... fragments) {
+        List<String> normalizedFragments = List.of(fragments).stream()
+                .map(fragment -> fragment.toLowerCase(Locale.ROOT).trim())
+                .filter(fragment -> !fragment.isBlank())
+                .toList();
+
+        WebElement matchingResult = findResultMatchingAllWithScroll(normalizedFragments);
+        if (matchingResult == null) {
+            return false;
+        }
+
+        revealResult(matchingResult);
+        return true;
     }
 
     private void waitForResultsState() {
@@ -143,8 +160,6 @@ public class SearchPage extends BasePage {
     }
 
     private WebElement firstResultMatchingAll(String... fragments) {
-        ensureResultsLoaded();
-
         List<String> normalizedFragments = List.of(fragments).stream()
                 .map(fragment -> fragment.toLowerCase(Locale.ROOT).trim())
                 .filter(fragment -> !fragment.isBlank())
@@ -154,13 +169,35 @@ public class SearchPage extends BasePage {
             return firstResultLink();
         }
 
+        WebElement matchingResult = findResultMatchingAllWithScroll(normalizedFragments);
+        return matchingResult == null ? firstResultLink() : matchingResult;
+    }
+
+    private WebElement findResultMatchingAllWithScroll(List<String> normalizedFragments) {
+        ensureResultsLoaded();
+
+        for (int attempt = 0; attempt <= MAX_SCROLL_ATTEMPTS; attempt++) {
+            WebElement matchingResult = findMatchingResult(normalizedFragments);
+            if (matchingResult != null) {
+                return matchingResult;
+            }
+
+            if (attempt == MAX_SCROLL_ATTEMPTS || !scrollForMoreResults()) {
+                break;
+            }
+        }
+
+        return null;
+    }
+
+    private WebElement findMatchingResult(List<String> normalizedFragments) {
         return findResultLinks().stream()
                 .filter(resultLink -> {
                     String searchableText = extractSearchableText(resultLink).toLowerCase(Locale.ROOT);
                     return normalizedFragments.stream().allMatch(searchableText::contains);
                 })
                 .findFirst()
-                .orElseGet(this::firstResultLink);
+                .orElse(null);
     }
 
     private List<WebElement> findResultLinks() {
@@ -174,6 +211,54 @@ public class SearchPage extends BasePage {
                     }
                 })
                 .toList();
+    }
+
+    private boolean scrollForMoreResults() {
+        long previousHeight = currentDocumentHeight();
+        long previousOffset = currentScrollOffset();
+        int previousCount = findResultLinks().size();
+        long targetOffset = previousOffset + Math.max(currentViewportHeight(), 1200L);
+
+        for (int step = 1; step <= SCROLL_STEPS_PER_ATTEMPT; step++) {
+            long nextOffset = previousOffset
+                    + ((targetOffset - previousOffset) * step / SCROLL_STEPS_PER_ATTEMPT);
+            ((JavascriptExecutor) driver).executeScript("window.scrollTo(0, arguments[0]);", nextOffset);
+            pause(SCROLL_STEP_PAUSE);
+        }
+
+        try {
+            new WebDriverWait(driver, SCROLL_TIMEOUT).until(webDriver ->
+                    findResultLinks().size() > previousCount
+                            || currentDocumentHeight() > previousHeight
+                            || currentScrollOffset() > previousOffset);
+        } catch (TimeoutException ignored) {
+        }
+
+        return findResultLinks().size() > previousCount
+                || currentDocumentHeight() > previousHeight
+                || currentScrollOffset() > previousOffset;
+    }
+
+    private void revealResult(WebElement resultLink) {
+        scrollIntoView(resultLink);
+        pause(FOUND_RESULT_PAUSE);
+    }
+
+    private long currentDocumentHeight() {
+        Object value = ((JavascriptExecutor) driver).executeScript(
+                "return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);");
+        return value instanceof Number ? ((Number) value).longValue() : 0L;
+    }
+
+    private long currentScrollOffset() {
+        Object value = ((JavascriptExecutor) driver).executeScript(
+                "return Math.max(window.pageYOffset, document.documentElement.scrollTop, document.body.scrollTop);");
+        return value instanceof Number ? ((Number) value).longValue() : 0L;
+    }
+
+    private long currentViewportHeight() {
+        Object value = ((JavascriptExecutor) driver).executeScript("return window.innerHeight;");
+        return value instanceof Number ? ((Number) value).longValue() : 0L;
     }
 
     private String extractResultText(WebElement resultLink) {

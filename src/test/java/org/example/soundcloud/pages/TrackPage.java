@@ -1,6 +1,7 @@
 package org.example.soundcloud.pages;
 
 import java.time.Duration;
+import java.util.Arrays;
 import org.openqa.selenium.By;
 import org.openqa.selenium.ElementClickInterceptedException;
 import org.openqa.selenium.Keys;
@@ -8,6 +9,8 @@ import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class TrackPage extends BasePage {
@@ -129,12 +132,26 @@ public class TrackPage extends BasePage {
     public void openShareDialog() {
         dismissAuthGateIfPresent();
 
-        if (isAnyVisible(DEFAULT_TIMEOUT, copyLinkButton, shareDialog)) {
+        if (isVisible(copyLinkButton, SHORT_TIMEOUT) || isVisible(shareDialog, SHORT_TIMEOUT)) {
             return;
         }
 
-        if (isAnyVisible(DEFAULT_TIMEOUT, shareButton)) {
+        if (waitUntilAnyShareElementVisible(DEFAULT_TIMEOUT, shareButton)) {
             click(shareButton);
+            waitUntilAnyShareElementVisible(DEFAULT_TIMEOUT, copyLinkButton, shareDialog);
+        }
+    }
+
+    private boolean waitUntilAnyShareElementVisible(Duration timeout, By... locators) {
+        ExpectedCondition<?>[] conditions = Arrays.stream(locators)
+                .map(ExpectedConditions::visibilityOfElementLocated)
+                .toArray(ExpectedCondition<?>[]::new);
+
+        try {
+            new WebDriverWait(driver, timeout).until(ExpectedConditions.or(conditions));
+            return true;
+        } catch (TimeoutException exception) {
+            return false;
         }
     }
 

@@ -64,20 +64,6 @@ public abstract class BasePage {
         return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
     }
 
-    protected WebElement waitForAnyVisible(Duration timeout, By... locators) {
-        return new WebDriverWait(driver, timeout).until(webDriver -> {
-            for (By locator : locators) {
-                for (WebElement element : webDriver.findElements(locator)) {
-                    if (element.isDisplayed()) {
-                        return element;
-                    }
-                }
-            }
-
-            return null;
-        });
-    }
-
     protected WebElement waitForClickable(By locator) {
         return wait.until(ExpectedConditions.elementToBeClickable(locator));
     }
@@ -167,15 +153,6 @@ public abstract class BasePage {
             new WebDriverWait(driver, timeout).until(ExpectedConditions.visibilityOfElementLocated(locator));
             return true;
         } catch (TimeoutException | NoSuchWindowException | NoSuchSessionException exception) {
-            return false;
-        }
-    }
-
-    protected boolean isAnyVisible(Duration timeout, By... locators) {
-        try {
-            waitForAnyVisible(timeout, locators);
-            return true;
-        } catch (TimeoutException exception) {
             return false;
         }
     }

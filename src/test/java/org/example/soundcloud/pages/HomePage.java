@@ -8,6 +8,8 @@ import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class HomePage extends BasePage {
 
@@ -49,8 +51,8 @@ public class HomePage extends BasePage {
 
         if (!isPageOpened()) {
             try {
-                waitForAnyVisible(DEFAULT_TIMEOUT, logoLink, popularSearchesLink,
-                        uploadButton, signInButton);
+                new WebDriverWait(driver, DEFAULT_TIMEOUT)
+                        .until(ExpectedConditions.titleContains("SoundCloud"));
             } catch (TimeoutException exception) {
                 throw new TimeoutException("Home page did not expose any stable navigation markers", exception);
             }
@@ -71,11 +73,7 @@ public class HomePage extends BasePage {
         SearchPage searchPage = new SearchPage(driver);
         dismissCookieBannerIfPresent();
 
-        WebElement searchUiElement = null;
-        try {
-            searchUiElement = waitForAnyVisible(SEARCH_UI_TIMEOUT, searchInput, searchForm, searchEntryPoint);
-        } catch (TimeoutException ignored) {
-        }
+        WebElement searchUiElement = waitForSearchUiElement();
 
         if (searchUiElement != null && trySearchUsingVisibleElement(searchUiElement, query, searchPage)) {
             return searchPage;
@@ -86,6 +84,34 @@ public class HomePage extends BasePage {
         }
 
         throw new IllegalStateException("Search could not be performed through the home page UI");
+    }
+
+    private WebElement waitForSearchUiElement() {
+        try {
+            new WebDriverWait(driver, SEARCH_UI_TIMEOUT).until(ExpectedConditions.or(
+                    ExpectedConditions.visibilityOfElementLocated(searchInput),
+                    ExpectedConditions.visibilityOfElementLocated(searchForm),
+                    ExpectedConditions.visibilityOfElementLocated(searchEntryPoint)));
+        } catch (TimeoutException ignored) {
+            return null;
+        }
+
+        return firstVisibleElement(searchInput, searchForm, searchEntryPoint);
+    }
+
+    private WebElement firstVisibleElement(By... locators) {
+        for (By locator : locators) {
+            for (WebElement element : driver.findElements(locator)) {
+                try {
+                    if (element.isDisplayed()) {
+                        return element;
+                    }
+                } catch (StaleElementReferenceException ignored) {
+                }
+            }
+        }
+
+        return null;
     }
 
     private boolean trySearchUsingVisibleElement(WebElement searchUiElement, String query, SearchPage searchPage) {
@@ -162,13 +188,19 @@ public class HomePage extends BasePage {
 
     public boolean isPageOpened() {
         return currentUrl().startsWith(TestData.BASE_URL)
-                && pageTitle().toLowerCase().contains("soundcloud")
-                && isAnyVisible(SHORT_TIMEOUT, logoLink, popularSearchesLink, searchForm, searchInput, searchEntryPoint,
-                        uploadButton, signInButton);
+                && pageTitle().toLowerCase().contains("soundcloud");
     }
 
     public boolean isSearchInputVisible() {
         dismissCookieBannerIfPresent();
-        return isAnyVisible(SEARCH_UI_TIMEOUT, searchForm, searchInput, searchEntryPoint);
+        try {
+            new WebDriverWait(driver, SEARCH_UI_TIMEOUT).until(ExpectedConditions.or(
+                    ExpectedConditions.visibilityOfElementLocated(searchForm),
+                    ExpectedConditions.visibilityOfElementLocated(searchInput),
+                    ExpectedConditions.visibilityOfElementLocated(searchEntryPoint)));
+            return true;
+        } catch (TimeoutException exception) {
+            return false;
+        }
     }
 }
